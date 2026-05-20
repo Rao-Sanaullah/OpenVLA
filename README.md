@@ -24,7 +24,6 @@ A complete, battle-tested installation guide for **OpenVLA 7B** on Docker — in
 Issues not covered in the official OpenVLA docs:
 
 - 🔴 **RTX 5090 (sm_120) not supported by stable PyTorch** — stable PyTorch crashes at runtime with `no kernel image` error. Fix: use PyTorch nightly `cu128` with `TORCH_CUDA_ARCH_LIST="12.0"`
-- 🔴 **SSL certificate errors behind corporate firewall** — pip and git fail with `CERTIFICATE_VERIFY_FAILED`. Fix: install company cert into the Docker image before any other command
 - 🔴 **Old PyTorch (cu121) cached in Docker layer** — rebuilding without `--no-cache` silently reuses the wrong version. Fix: delete old image with `docker rmi` first
 - 🔴 **Model weights (~14 GB) re-downloaded every container run** — Fix: mount `./hf_cache` and set `HF_HOME=/workspace/hf_cache`
 - 🔴 **Flash Attention warning about GPU init order** — Fix: load model on CPU first, then call `.to('cuda:0')`
