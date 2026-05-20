@@ -2,7 +2,7 @@
 
 A complete, battle-tested installation guide for **OpenVLA 7B** on Docker — including real fixes for RTX 5090 Blackwell (sm_120) and corporate firewall SSL issues not covered in the official docs.
 
-📖 **Full interactive guide → [View on GitHub Pages](https://your-username.github.io/openvla-install-guide/)**
+📖 **Full interactive guide → [View on GitHub Pages](https://rao-sanaullah.github.io/OpenVLA/)**
 
 ---
 
