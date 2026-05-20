@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenVLA — Docker Install Guide (RTX 5090)</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c0f;
+    --bg2: #0f1218;
+    --bg3: #141820;
+    --border: #1e2530;
+    --green: #00ff88;
+    --green-dim: #00cc6a;
+    --green-glow: rgba(0,255,136,0.12);
+    --amber: #ffb830;
+    --red: #ff4455;
+    --blue: #4da6ff;
+    --text: #c8d4e0;
+    --text-dim: #6a7a8a;
+    --text-bright: #e8f0f8;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 80px 0 60px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 60px;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--green-glow);
+    border: 1px solid rgba(0,255,136,0.3);
+    color: var(--green);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    padding: 6px 14px;
+    border-radius: 3px;
+    margin-bottom: 28px;
+    text-transform: uppercase;
+  }
+
+  .badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  h1 {
+    font-size: clamp(36px, 6vw, 62px);
+    font-weight: 800;
+    line-height: 1.05;
+    color: var(--text-bright);
+    letter-spacing: -0.02em;
+    margin-bottom: 20px;
+  }
+
+  h1 span { color: var(--green); }
+
+  .subtitle {
+    font-size: 17px;
+    color: var(--text-dim);
+    max-width: 580px;
+    margin-bottom: 40px;
+  }
+
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-top: 40px;
+  }
+
+  .meta-item {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+  }
+
+  .meta-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .meta-value {
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--green);
+  }
+
+  /* ── SECTION ── */
+  .section {
+    margin-bottom: 56px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+
+  .step-num {
+    width: 36px; height: 36px;
+    background: var(--green-glow);
+    border: 1px solid rgba(0,255,136,0.4);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--green);
+    flex-shrink: 0;
+  }
+
+  h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-bright);
+    letter-spacing: -0.01em;
+  }
+
+  h3 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 12px;
+    margin-top: 28px;
+  }
+
+  p {
+    color: var(--text);
+    margin-bottom: 16px;
+    font-size: 15px;
+  }
+
+  /* ── CODE BLOCKS ── */
+  .code-block {
+    position: relative;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--green);
+    border-radius: 6px;
+    margin: 16px 0;
+    overflow: hidden;
+  }
+
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .code-lang {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  .copy-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+
+  .copy-btn:hover {
+    border-color: var(--green);
+    color: var(--green);
+  }
+
+  .copy-btn.copied {
+    border-color: var(--green);
+    color: var(--green);
+    background: var(--green-glow);
+  }
+
+  pre {
+    padding: 20px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text);
+  }
+
+  .c-comment { color: #4a5a6a; }
+  .c-cmd { color: var(--green); }
+  .c-str { color: var(--amber); }
+  .c-key { color: var(--blue); }
+  .c-flag { color: #c084fc; }
+
+  /* ── CALLOUTS ── */
+  .callout {
+    display: flex;
+    gap: 14px;
+    padding: 16px 18px;
+    border-radius: 6px;
+    margin: 20px 0;
+    font-size: 14px;
+  }
+
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+
+  .callout.warn {
+    background: rgba(255,184,48,0.07);
+    border: 1px solid rgba(255,184,48,0.25);
+    color: #e8c870;
+  }
+
+  .callout.info {
+    background: rgba(77,166,255,0.07);
+    border: 1px solid rgba(77,166,255,0.25);
+    color: #7ab8f5;
+  }
+
+  .callout.success {
+    background: var(--green-glow);
+    border: 1px solid rgba(0,255,136,0.25);
+    color: #60d4a0;
+  }
+
+  .callout.error {
+    background: rgba(255,68,85,0.07);
+    border: 1px solid rgba(255,68,85,0.25);
+    color: #f08090;
+  }
+
+  /* ── FIXES TABLE ── */
+  .fixes-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 14px;
+  }
+
+  .fixes-table th {
+    text-align: left;
+    padding: 10px 16px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  .fixes-table td {
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  .fixes-table tr:hover td { background: var(--bg2); }
+
+  .tag-red { color: var(--red); font-size: 16px; }
+  .tag-green { color: var(--green); font-size: 16px; }
+
+  /* ── STATUS CHECKS ── */
+  .status-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 20px 0;
+  }
+
+  .status-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    flex-shrink: 0;
+    box-shadow: 0 0 6px var(--green);
+  }
+
+  /* ── FILE TREE ── */
+  .file-tree {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 2;
+  }
+
+  .ft-dir { color: var(--blue); }
+  .ft-file { color: var(--text); }
+  .ft-note { color: var(--text-dim); }
+  .ft-new { color: var(--green); }
+
+  /* ── DIVIDER ── */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 48px 0;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    padding-top: 40px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+
+  footer a {
+    color: var(--green-dim);
+    text-decoration: none;
+  }
+
+  footer a:hover { color: var(--green); }
+
+  /* ── TOC ── */
+  .toc {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 24px;
+    margin-bottom: 48px;
+  }
+
+  .toc-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .toc a {
+    display: block;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 14px;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+    transition: color 0.2s;
+  }
+
+  .toc a:last-child { border-bottom: none; }
+  .toc a:hover { color: var(--green); }
+  .toc a span { color: var(--text-dim); font-family: 'JetBrains Mono', monospace; font-size: 12px; margin-right: 10px; }
+
+  @media (max-width: 600px) {
+    .status-grid { grid-template-columns: 1fr; }
+    .meta-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="badge">Community Install Guide</div>
+    <h1>OpenVLA <span>Docker</span><br>Install Guide</h1>
+    <p class="subtitle">A complete, battle-tested installation guide for OpenVLA 7B — Docker on Linux, including real fixes for RTX 5090 Blackwell (sm_120) and corporate firewall SSL issues not covered in the official docs.</p>
+
+    <div class="meta-grid">
+      <div class="meta-item">
+        <div class="meta-label">OS</div>
+        <div class="meta-value">Ubuntu 22.04</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">GPU</div>
+        <div class="meta-value">RTX 5090</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">CUDA</div>
+        <div class="meta-value">12.8</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Python</div>
+        <div class="meta-value">3.10</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">PyTorch</div>
+        <div class="meta-value">2.12 nightly</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Model</div>
+        <div class="meta-value">OpenVLA 7B</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOC -->
+  <div class="toc">
+    <div class="toc-title">Table of Contents</div>
+    <a href="#fixes"><span>00</span>What's Fixed Here</a>
+    <a href="#prereqs"><span>01</span>Prerequisites</a>
+    <a href="#structure"><span>02</span>Folder Structure</a>
+    <a href="#dockerfile"><span>03</span>Dockerfile</a>
+    <a href="#compose"><span>04</span>docker-compose.yml</a>
+    <a href="#env"><span>05</span>.env File</a>
+    <a href="#build"><span>06</span>Build the Image</a>
+    <a href="#verify"><span>07</span>Verify GPU & Model</a>
+    <a href="#usage"><span>08</span>Daily Usage</a>
+    <a href="#troubleshoot"><span>09</span>Troubleshooting</a>
+  </div>
+
+  <!-- FIXES -->
+  <div class="section" id="fixes">
+    <div class="section-header">
+      <div class="step-num">00</div>
+      <h2>What's Fixed Here</h2>
+    </div>
+    <p>Issues not covered in the official OpenVLA docs — encountered on real hardware:</p>
+    <table class="fixes-table">
+      <tr>
+        <th>Issue</th>
+        <th>Fix</th>
+      </tr>
+      <tr>
+        <td><span class="tag-red">🔴</span> RTX 5090 (sm_120) not supported by stable PyTorch</td>
+        <td>Use PyTorch nightly <code>cu128</code> + set <code>TORCH_CUDA_ARCH_LIST="12.0"</code></td>
+      </tr>
+      <tr>
+        <td><span class="tag-red">🔴</span> SSL certificate errors behind corporate firewall</td>
+        <td>Install company cert into image before any pip/git commands</td>
+      </tr>
+      <tr>
+        <td><span class="tag-red">🔴</span> Old PyTorch cached in Docker layer (still shows cu121)</td>
+        <td>Use <code>docker compose build --no-cache</code> and delete old image first</td>
+      </tr>
+      <tr>
+        <td><span class="tag-red">🔴</span> Model weights re-downloaded on every container run</td>
+        <td>Mount <code>./hf_cache</code> and set <code>HF_HOME=/workspace/hf_cache</code></td>
+      </tr>
+      <tr>
+        <td><span class="tag-red">🔴</span> Flash Attention 2 warning about GPU init order</td>
+        <td>Load model to CPU first, then <code>.to('cuda:0')</code> — already handled in examples below</td>
+      </tr>
+    </table>
+  </div>
+
+  <hr class="divider">
+
+  <!-- PREREQS -->
+  <div class="section" id="prereqs">
+    <div class="section-header">
+      <div class="step-num">01</div>
+      <h2>Prerequisites</h2>
+    </div>
+    <p>Install Docker and the NVIDIA Container Toolkit on your host machine:</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">bash — host machine</span>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+      <pre><span class="c-comment"># Install Docker</span>
+<span class="c-cmd">curl</span> <span class="c-flag">-fsSL</span> https://get.docker.com | sh
+<span class="c-cmd">sudo usermod</span> <span class="c-flag">-aG</span> docker $USER && newgrp docker
+
+<span class="c-comment"># Install NVIDIA Container Toolkit</span>
+<span class="c-cmd">curl</span> <span class="c-flag">-fsSL</span> https://nvidia.github.io/libnvidia-container/gpgkey | \
+  sudo gpg <span class="c-flag">--dearmor</span> <span class="c-flag">-o</span> /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+
+<span class="c-cmd">curl</span> <span class="c-flag">-s -L</span> https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+  sed <span class="c-str">'s#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g'</span> | \
+  sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+
+<span class="c-cmd">sudo apt-get update</span> && sudo apt-get install <span class="c-flag">-y</span> nvidia-container-toolkit
+<span class="c-cmd">sudo nvidia-ctk</span> runtime configure <span class="c-flag">--runtime</span>=docker
+<span class="c-cmd">sudo systemctl restart</span> docker</pre>
+    </div>
+
+    <div class="callout info">
+      <span class="callout-icon">ℹ️</span>
+      <div>Get your HuggingFace token at <strong>huggingface.co/settings/tokens</strong> — you need read access. The openvla-7b model is public so no access request needed.</div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- STRUCTURE -->
+  <div class="section" id="structure">
+    <div class="section-header">
+      <div class="step-num">02</div>
+      <h2>Folder Structure</h2>
+    </div>
+    <p>Clone the OpenVLA repo and set up your working directory. Everything lives in one place:</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">bash</span>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+      <pre><span class="c-comment"># Go to wherever you want the project</span>
+<span class="c-cmd">cd</span> /your/preferred/path
+
+<span class="c-comment"># Clone the OpenVLA repo</span>
+<span class="c-cmd">git clone</span> https://github.com/openvla/openvla.git
+<span class="c-cmd">cd</span> openvla
+
+<span class="c-comment"># Create persistent data folders</span>
+<span class="c-cmd">mkdir</span> <span class="c-flag">-p</span> hf_cache datasets checkpoints outputs</pre>
+    </div>
+
+    <p>Your final structure:</p>
+    <div class="file-tree">
+      <div><span class="ft-dir">openvla/</span> <span class="ft-note">← your working directory</span></div>
+      <div>&nbsp;&nbsp;├── <span class="ft-dir">prismatic/</span> <span class="ft-note">model code</span></div>
+      <div>&nbsp;&nbsp;├── <span class="ft-dir">vla-scripts/</span> <span class="ft-note">training scripts</span></div>
+      <div>&nbsp;&nbsp;├── <span class="ft-dir">experiments/</span> <span class="ft-note">eval scripts</span></div>
+      <div>&nbsp;&nbsp;├── <span class="ft-dir">hf_cache/</span> <span class="ft-note">model weights — persistent across runs</span></div>
+      <div>&nbsp;&nbsp;├── <span class="ft-dir">datasets/</span> <span class="ft-note">robot datasets</span></div>
+      <div>&nbsp;&nbsp;├── <span class="ft-dir">checkpoints/</span> <span class="ft-note">fine-tuned model saves</span></div>
+      <div>&nbsp;&nbsp;├── <span class="ft-dir">outputs/</span> <span class="ft-note">logs and results</span></div>
+      <div>&nbsp;&nbsp;├── <span class="ft-new">Dockerfile</span> <span class="ft-note">← create this</span></div>
+      <div>&nbsp;&nbsp;├── <span class="ft-new">docker-compose.yml</span> <span class="ft-note">← create this</span></div>
+      <div>&nbsp;&nbsp;├── <span class="ft-new">.env</span> <span class="ft-note">← create this</span></div>
+      <div>&nbsp;&nbsp;└── <span class="ft-new">company-root.crt</span> <span class="ft-note">← only if behind corporate firewall</span></div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- DOCKERFILE -->
+  <div class="section" id="dockerfile">
+    <div class="section-header">
+      <div class="step-num">03</div>
+      <h2>Dockerfile</h2>
+    </div>
+
+    <p>Create <code>Dockerfile</code> inside the <code>openvla/</code> folder. If you are <strong>not</strong> behind a corporate firewall, remove the certificate block.</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">Dockerfile</span>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+      <pre><span class="c-key">FROM</span> nvidia/cuda:12.8.0-cudnn-devel-ubuntu22.04
+
+<span class="c-key">ENV</span> DEBIAN_FRONTEND=noninteractive
+<span class="c-key">ENV</span> PYTHONUNBUFFERED=1
+<span class="c-key">ENV</span> TORCH_CUDA_ARCH_LIST=<span class="c-str">"12.0"</span>
+
+<span class="c-comment"># ── Corporate firewall certificate (remove if not needed) ────────────────────</span>
+<span class="c-key">COPY</span> company-root.crt /usr/local/share/ca-certificates/company-root.crt
+<span class="c-key">RUN</span> apt-get update && apt-get install -y ca-certificates && \
+    update-ca-certificates
+<span class="c-key">ENV</span> REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+<span class="c-key">ENV</span> SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+<span class="c-key">ENV</span> GIT_SSL_CAINFO=/etc/ssl/certs/ca-certificates.crt
+<span class="c-key">ENV</span> CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+<span class="c-comment"># ─────────────────────────────────────────────────────────────────────────────</span>
+
+<span class="c-comment"># System dependencies</span>
+<span class="c-key">RUN</span> apt-get update && apt-get install -y \
+    python3.10 \
+    python3.10-dev \
+    python3-pip \
+    git \
+    git-lfs \
+    ninja-build \
+    build-essential \
+    wget \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+<span class="c-comment"># Make python3.10 the default</span>
+<span class="c-key">RUN</span> update-alternatives --install /usr/bin/python python /usr/bin/python3.10 1 && \
+    update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1
+
+<span class="c-key">RUN</span> pip install --upgrade pip setuptools wheel
+
+<span class="c-comment"># ── PyTorch nightly cu128 — REQUIRED for RTX 5090 (Blackwell / sm_120) ───────</span>
+<span class="c-key">RUN</span> pip install --pre --upgrade \
+    torch \
+    torchvision \
+    torchaudio \
+    --index-url https://download.pytorch.org/whl/nightly/cu128
+<span class="c-comment"># ─────────────────────────────────────────────────────────────────────────────</span>
+
+<span class="c-comment"># OpenVLA Python dependencies</span>
+<span class="c-key">RUN</span> pip install \
+    <span class="c-str">"transformers==4.40.1"</span> \
+    <span class="c-str">"tokenizers==0.19.1"</span> \
+    <span class="c-str">"timm==0.9.10"</span> \
+    <span class="c-str">"huggingface_hub"</span> \
+    <span class="c-str">"accelerate"</span> \
+    <span class="c-str">"peft"</span> \
+    <span class="c-str">"draccus"</span> \
+    <span class="c-str">"einops"</span> \
+    <span class="c-str">"pillow"</span> \
+    <span class="c-str">"wandb"</span> \
+    <span class="c-str">"tensorflow==2.15.0"</span> \
+    <span class="c-str">"tensorflow-datasets==4.9.3"</span> \
+    <span class="c-str">"dlimp @ git+https://github.com/moojink/dlimp_openvla"</span>
+
+<span class="c-comment"># Flash Attention 2 — compiled for Blackwell</span>
+<span class="c-key">RUN</span> pip install packaging ninja && \
+    pip install <span class="c-str">"flash-attn==2.5.5"</span> --no-build-isolation
+
+<span class="c-key">WORKDIR</span> /workspace</pre>
+    </div>
+
+    <div class="callout warn">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>No corporate firewall?</strong> Remove the 6 lines between the certificate comments. Also remove the <code>COPY company-root.crt</code> line and delete <code>company-root.crt</code> from the COPY instruction.</div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- COMPOSE -->
+  <div class="section" id="compose">
+    <div class="section-header">
+      <div class="step-num">04</div>
+      <h2>docker-compose.yml</h2>
+    </div>
+    <p>Create <code>docker-compose.yml</code> inside the <code>openvla/</code> folder. The entire repo folder is mounted into the container so edits on your host are instantly reflected.</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">yaml</span>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+      <pre><span class="c-key">services</span>:
+  <span class="c-key">openvla</span>:
+    <span class="c-key">build</span>: .
+    <span class="c-key">image</span>: openvla:latest
+    <span class="c-key">runtime</span>: nvidia
+    <span class="c-key">environment</span>:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - HF_TOKEN=${HF_TOKEN}
+      - HUGGING_FACE_HUB_TOKEN=${HF_TOKEN}
+      - HF_HOME=/workspace/hf_cache
+    <span class="c-key">volumes</span>:
+      - .:/workspace                         <span class="c-comment"># live code from host</span>
+      - ./hf_cache:/workspace/hf_cache       <span class="c-comment"># model weights — persistent</span>
+      - ./datasets:/workspace/datasets       <span class="c-comment"># robot datasets</span>
+      - ./checkpoints:/workspace/checkpoints <span class="c-comment"># fine-tuned models</span>
+      - ./outputs:/workspace/outputs         <span class="c-comment"># logs and results</span>
+    <span class="c-key">shm_size</span>: <span class="c-str">'32gb'</span>
+    <span class="c-key">ulimits</span>:
+      <span class="c-key">memlock</span>: -1
+      <span class="c-key">stack</span>: 67108864
+    <span class="c-key">stdin_open</span>: true
+    <span class="c-key">tty</span>: true
+    <span class="c-key">command</span>: bash -c <span class="c-str">"cd /workspace && pip install -e . --quiet && bash"</span>
+    <span class="c-key">deploy</span>:
+      <span class="c-key">resources</span>:
+        <span class="c-key">reservations</span>:
+          <span class="c-key">devices</span>:
+            - <span class="c-key">driver</span>: nvidia
+              <span class="c-key">count</span>: all
+              <span class="c-key">capabilities</span>: [gpu]</pre>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ENV -->
+  <div class="section" id="env">
+    <div class="section-header">
+      <div class="step-num">05</div>
+      <h2>.env File</h2>
+    </div>
+    <p>Create <code>.env</code> inside the <code>openvla/</code> folder:</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">.env</span>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+      <pre>HF_TOKEN=hf_your_token_here
+HF_HOME=/workspace/hf_cache</pre>
+    </div>
+
+    <div class="callout warn">
+      <span class="callout-icon">⚠️</span>
+      <div>Add <code>.env</code> to your <code>.gitignore</code> — never commit your HuggingFace token to a public repo.</div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- BUILD -->
+  <div class="section" id="build">
+    <div class="section-header">
+      <div class="step-num">06</div>
+      <h2>Build the Image</h2>
+    </div>
+
+    <div class="callout info">
+      <span class="callout-icon">⏱️</span>
+      <div>First build takes <strong>30–40 minutes</strong>. Flash Attention compiles from source (~15 min). PyTorch nightly downloads ~5 GB. Subsequent builds use Docker layer cache and are much faster.</div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">bash</span>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+      <pre><span class="c-comment"># Make sure you're in the openvla folder</span>
+<span class="c-cmd">cd</span> /your/path/openvla
+
+<span class="c-comment"># Build (use --no-cache if rebuilding to fix PyTorch version)</span>
+<span class="c-cmd">docker compose build</span>
+
+<span class="c-comment"># If you need a completely fresh build (e.g. wrong PyTorch cached)</span>
+<span class="c-cmd">docker rmi</span> openvla:latest
+<span class="c-cmd">docker compose build</span> <span class="c-flag">--no-cache</span></pre>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- VERIFY -->
+  <div class="section" id="verify">
+    <div class="section-header">
+      <div class="step-num">07</div>
+      <h2>Verify GPU &amp; Model</h2>
+    </div>
+
+    <h3>Step 1 — Verify RTX 5090 GPU compute works</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">bash</span>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+      <pre><span class="c-cmd">docker compose run</span> <span class="c-flag">--rm</span> openvla python -c <span class="c-str">"
+import torch
+print('PyTorch:', torch.__version__)
+print('CUDA:', torch.version.cuda)
+print('GPU:', torch.cuda.get_device_name(0))
+print('Compute capability:', torch.cuda.get_device_capability(0))
+x = torch.randn(1000, 1000, device='cuda')
+y = torch.mm(x, x)
+print('GPU compute test PASSED! Shape:', y.shape)
+"</span></pre>
+    </div>
+
+    <p>Expected output:</p>
+    <div class="status-grid">
+      <div class="status-item"><div class="status-dot"></div>PyTorch: 2.12.0.dev...+cu128</div>
+      <div class="status-item"><div class="status-dot"></div>CUDA: 12.8</div>
+      <div class="status-item"><div class="status-dot"></div>GPU: NVIDIA GeForce RTX 5090</div>
+      <div class="status-item"><div class="status-dot"></div>Compute capability: (12, 0)</div>
+      <div class="status-item"><div class="status-dot"></div>GPU compute test PASSED!</div>
+      <div class="status-item"><div class="status-dot"></div>No sm_120 warnings</div>
+    </div>
+
+    <h3>Step 2 — Load the full OpenVLA 7B model (~14 GB download, only once)</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">bash</span>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+      <pre><span class="c-cmd">docker compose run</span> <span class="c-flag">--rm</span> openvla python -c <span class="c-str">"
+import torch
+from transformers import AutoModelForVision2Seq, AutoProcessor
+
+processor = AutoProcessor.from_pretrained(
+    'openvla/openvla-7b', trust_remote_code=True)
+
+vla = AutoModelForVision2Seq.from_pretrained(
+    'openvla/openvla-7b',
+    attn_implementation='flash_attention_2',
+    torch_dtype=torch.bfloat16,
+    low_cpu_mem_usage=True,
+    trust_remote_code=True
+).to('cuda:0')
+
+print('Model loaded!')
+print('Parameters:', round(sum(p.numel() for p in vla.parameters()) / 1e9, 2), 'B')
+print('GPU memory used:', round(torch.cuda.memory_allocated(0)/1024**3, 2), 'GB')
+print('GPU memory free:', round(torch.cuda.mem_get_info(0)[0]/1024**3, 2), 'GB')
+"</span></pre>
+    </div>
+
+    <div class="callout success">
+      <span class="callout-icon">✅</span>
+      <div>Expected: <strong>7.54B parameters</strong>, <strong>~14 GB VRAM used</strong>, ~16 GB free. Weights are cached in <code>hf_cache/</code> and won't re-download on subsequent runs.</div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- USAGE -->
+  <div class="section" id="usage">
+    <div class="section-header">
+      <div class="step-num">08</div>
+      <h2>Daily Usage</h2>
+    </div>
+
+    <h3>Interactive shell</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">bash</span>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+      <pre><span class="c-cmd">docker compose run</span> <span class="c-flag">--rm</span> openvla bash</pre>
+    </div>
+
+    <h3>Run inference script</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">bash</span>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+      <pre><span class="c-cmd">docker compose run</span> <span class="c-flag">--rm</span> openvla python vla-scripts/deploy.py \
+  <span class="c-flag">--pretrained_checkpoint</span> openvla/openvla-7b \
+  <span class="c-flag">--host</span> 0.0.0.0 \
+  <span class="c-flag">--port</span> 8000</pre>
+    </div>
+
+    <h3>LoRA fine-tuning</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">bash</span>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+      <pre><span class="c-cmd">docker compose run</span> <span class="c-flag">--rm</span> openvla \
+  torchrun <span class="c-flag">--standalone --nnodes</span> 1 <span class="c-flag">--nproc-per-node</span> 1 \
+  vla-scripts/finetune.py \
+  <span class="c-flag">--vla_path</span> openvla/openvla-7b \
+  <span class="c-flag">--data_root_dir</span> /workspace/datasets \
+  <span class="c-flag">--dataset_name</span> bridge_orig \
+  <span class="c-flag">--run_root_dir</span> /workspace/checkpoints \
+  <span class="c-flag">--lora_rank</span> 32 \
+  <span class="c-flag">--batch_size</span> 16 \
+  <span class="c-flag">--learning_rate</span> 5e-4 \
+  <span class="c-flag">--image_aug</span> True</pre>
+    </div>
+
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div>Edit code in <code>openvla/</code> on your host machine with any editor — changes appear instantly inside the container because the folder is mounted as a volume.</div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- TROUBLESHOOT -->
+  <div class="section" id="troubleshoot">
+    <div class="section-header">
+      <div class="step-num">09</div>
+      <h2>Troubleshooting</h2>
+    </div>
+
+    <table class="fixes-table">
+      <tr>
+        <th>Error</th>
+        <th>Fix</th>
+      </tr>
+      <tr>
+        <td><code>sm_120 is not compatible</code> + RuntimeError on CUDA op</td>
+        <td>PyTorch is wrong version. Delete image with <code>docker rmi openvla:latest</code> and rebuild with <code>--no-cache</code></td>
+      </tr>
+      <tr>
+        <td>SSL certificate verify failed</td>
+        <td>Add your company cert to the Dockerfile as shown in Step 03. Must be installed before any pip/git command.</td>
+      </tr>
+      <tr>
+        <td>Model re-downloads every run</td>
+        <td>Confirm <code>HF_HOME=/workspace/hf_cache</code> is in <code>.env</code> and <code>./hf_cache</code> is mounted in compose</td>
+      </tr>
+      <tr>
+        <td><code>yaml: mapping values not allowed</code> on docker compose</td>
+        <td>Open <code>docker-compose.yml</code> in a text editor and re-paste cleanly — the file has stray characters</td>
+      </tr>
+      <tr>
+        <td><code>unknown instruction: cat</code> in Dockerfile</td>
+        <td>The <code>cat &gt;</code> shell command got written into the file. Open with <code>nano Dockerfile</code>, delete all, paste the Dockerfile content only</td>
+      </tr>
+      <tr>
+        <td>Flash Attention build fails</td>
+        <td>Ensure base image is <code>cuda:12.8.0-cudnn-devel</code> (devel variant). The runtime variant lacks compiler headers.</td>
+      </tr>
+      <tr>
+        <td>OOM during fine-tuning</td>
+        <td>Reduce <code>--batch_size</code> and increase <code>--grad_accumulation_steps</code> to compensate. RTX 5090 has 32 GB VRAM.</td>
+      </tr>
+    </table>
+  </div>
+
+  <hr class="divider">
+
+  <footer>
+    <div>OpenVLA Docker Install Guide · Community documentation · MIT License</div>
+    <div>
+      <a href="https://github.com/openvla/openvla" target="_blank">OpenVLA repo</a> ·
+      <a href="https://arxiv.org/abs/2406.09246" target="_blank">Paper</a> ·
+      <a href="https://huggingface.co/openvla/openvla-7b" target="_blank">HuggingFace</a>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+  function copyCode(btn) {
+    const pre = btn.closest('.code-block').querySelector('pre');
+    const text = pre.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'copied!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'copy';
+        btn.classList.remove('copied');
+      }, 2000);
+    });
+  }
+</script>
+</body>
+</html>
